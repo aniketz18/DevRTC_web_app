@@ -13,6 +13,7 @@ const server = http.createServer(app);
 
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
 
+// Socket.IO
 const io = new Server(server, {
     cors: {
         origin: CLIENT_URL,
@@ -21,6 +22,7 @@ const io = new Server(server, {
     },
 });
 
+// Middlewares
 app.use(cors({
     origin: CLIENT_URL,
     credentials: true,
@@ -31,19 +33,10 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 
-// Serve Static Assets in Production
-if (process.env.NODE_ENV === "production") {
-    const path = require("path");
-
-    app.use(express.static(path.join(__dirname, "../client/dist")));
-
-    // ✅ FIXED SPA FALLBACK (NO "*")
-    app.use((req, res) => {
-        res.sendFile(
-            path.resolve(__dirname, "../client/dist", "index.html")
-        );
-    });
-}
+// ✅ Health check (IMPORTANT for Render)
+app.get("/", (req, res) => {
+    res.send("DevRTC backend is running 🚀");
+});
 
 // Database Connection
 mongoose
@@ -55,16 +48,16 @@ mongoose
 const onlineUsers = new Map(); // socketId -> userId
 
 io.on("connection", (socket) => {
-    console.log(`Socket Connected: ${socket.id}`);
+    console.log(`Socket connected: ${socket.id}`);
 
     socket.on("join", (userId) => {
         onlineUsers.set(socket.id, userId);
-        io.emit("getOnlineUsers", Array.from(new Set(onlineUsers.values())));
+        io.emit("getOnlineUsers", [...new Set(onlineUsers.values())]);
     });
 
     socket.on("disconnect", () => {
         onlineUsers.delete(socket.id);
-        io.emit("getOnlineUsers", Array.from(new Set(onlineUsers.values())));
+        io.emit("getOnlineUsers", [...new Set(onlineUsers.values())]);
     });
 
     socket.on("callUser", ({ userToCall, signalData, from, name }) => {
@@ -99,6 +92,7 @@ io.on("connection", (socket) => {
     });
 });
 
+// Server Start
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
