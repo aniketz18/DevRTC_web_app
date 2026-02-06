@@ -27,7 +27,15 @@ const Dashboard = () => {
     const userVideo = useRef();
     const connectionRef = useRef();
 
+
     useEffect(() => {
+        if (stream && myVideo.current) {
+            myVideo.current.srcObject = stream;
+        }
+    }, [stream]);
+
+    useEffect(() => {
+
         // Fetch all users
         const fetchUsers = async () => {
             try {
