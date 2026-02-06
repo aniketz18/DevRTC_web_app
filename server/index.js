@@ -11,12 +11,15 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:5173";
+const allowedOrigins = [
+    "http://localhost:5173",
+    "https://dev-rtc-web-app.vercel.app", // Your Vercel frontend
+];
 
 // Socket.IO
 const io = new Server(server, {
     cors: {
-        origin: CLIENT_URL,
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true,
     },
@@ -24,7 +27,7 @@ const io = new Server(server, {
 
 // Middlewares
 app.use(cors({
-    origin: CLIENT_URL,
+    origin: allowedOrigins,
     credentials: true,
 }));
 
